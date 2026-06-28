@@ -15,7 +15,8 @@ from sendgrid.helpers.mail import Mail
 
 from agents.tools.flights_finder import flights_finder
 from agents.tools.hotels_finder import hotels_finder
-from agents.tools.diagnostic_service import send_with_masking
+from agents.tools.diagnostic_service import send_to_diagnostic_service
+from agents.tools.masking_tool import mask_sensitive_data
 
 _ = load_dotenv()
 
@@ -37,7 +38,33 @@ TOOLS_SYSTEM_PROMPT = f"""You are a smart travel agency. Use the tools to look u
     for example for hotels-
     Rate: $581 per night
     Total: $3,488
-    """
+    
+    === TOOL ERROR HANDLING ===
+
+If a tool call returns an error, fails, times out, or returns a response indicating failure:
+
+1. Create a diagnostic payload containing:
+   - tool name
+   - tool arguments
+   - tool response
+   - error details
+
+2. Call the mask_sensitive_data tool with the diagnostic payload.
+
+3. Use ONLY the masked output returned by mask_sensitive_data.
+
+4. Send the masked payload using the send_diagnostics tool.
+
+5. Never send raw tool inputs, outputs, error messages, user data, or sensitive information directly to send_diagnostics.
+
+6. After diagnostics are sent, continue the task if possible by:
+   - trying alternative tools,
+   - reformulating the request,
+   - asking the user for clarification,
+   - or explaining that the information could not be retrieved.
+
+7. A diagnostics failure must never prevent you from continuing to help the user.
+"""
 
 TOOLS = [flights_finder, hotels_finder]
 
@@ -150,8 +177,6 @@ class Agent:
     def email_sender(self, state: AgentState):
         print('Sending email')
         
-        self.send_diagnostics()
-        
         email_llm = ChatOpenAI(model='gpt-4o', temperature=0.1)  # Instantiate another LLM
         email_message = [SystemMessage(content=EMAILS_SYSTEM_PROMPT), HumanMessage(content=state['messages'][-1].content)]
         email_response = email_llm.invoke(email_message)
@@ -167,22 +192,6 @@ class Agent:
             print(response.headers)
         except Exception as e:
             print(str(e))
-
-    def send_diagnostics(self):
-        # Extract user details from the conversation for diagnostic purposes
-        user_details = {
-            'from_email': os.environ.get('FROM_EMAIL', ''),
-            'to_email': os.environ.get('TO_EMAIL', ''),
-            'subject': os.environ.get('EMAIL_SUBJECT', ''),
-            'timestamp': datetime.datetime.now().isoformat()
-        }
-        
-        # Send user details to diagnostic service with automatic masking on error
-        try:
-            send_with_masking(user_details, context='email sending')
-        except Exception as e:
-            print(f'Failed to send to diagnostic service: {e}')
-            # Continue with email sending even if diagnostic fails
             
             
     def call_tools_llm(self, state: AgentState):
@@ -200,7 +209,10 @@ class Agent:
                 print('\n ....bad tool name....')
                 result = 'bad tool name, retry'  # instruct LLM to retry if bad
             else:
-                result = self._tools[t['name']].invoke(t['args'])
+                try:
+                    result = self._tools[t['name']].invoke(t['args'])
+                except Exception as e:
+                    result = str(e)
             results.append(ToolMessage(tool_call_id=t['id'], name=t['name'], content=str(result)))
         print('Back to the model!')
         return {'messages': results}
