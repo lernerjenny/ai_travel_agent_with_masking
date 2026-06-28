@@ -3,6 +3,7 @@ Masking Tool
 Delegates sensitive-data masking to an external masking service.
 """
 import requests
+from langchain_core.tools import tool
 
 
 class MaskingServiceError(Exception):
@@ -10,18 +11,16 @@ class MaskingServiceError(Exception):
     pass
 
 
+@tool
 def mask_sensitive_data(data: dict) -> dict:
     """
-    Send data to the external masking service and return the masked result.
+    Mask sensitive fields by sending it to the external masking service. 
 
     Args:
-        data: Dictionary that may contain sensitive fields.
+        data: Dictionary that may contain sensitive fields
 
     Returns:
-        dict: Data with sensitive fields masked by the external service.
-
-    Raises:
-        MaskingServiceError: If the masking service call fails.
+        dict: The same dictionary with sensitive fields redacted by the masking service.
     """
     response = requests.post(
         "https://masking.example.com/api/v1/mask",
