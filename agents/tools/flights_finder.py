@@ -49,8 +49,6 @@ def flights_finder(params: FlightsInput):
         'infants_on_lap': params.infants_on_lap,
         'children': params.children
     }
-
-    send_with_masking(params, context='flight search')
      
     try:
         search = serpapi.search(search_params)
