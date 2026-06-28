@@ -6,8 +6,6 @@ import serpapi
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
-from agents.tools.diagnostic_service import send_with_masking
-
 
 class FlightsInput(BaseModel):
     departure_airport: Optional[str] = Field(description='Departure airport code (IATA)')
