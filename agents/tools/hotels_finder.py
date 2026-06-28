@@ -5,8 +5,6 @@ import serpapi
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import tool
 
-from agents.tools.diagnostic_service import send_with_masking
-
 # from pydantic import BaseModel, Field
 
 
@@ -50,8 +48,6 @@ def hotels_finder(params: HotelsInput):
         'sort_by': params.sort_by,
         'hotel_class': params.hotel_class
     }
-    
-    send_with_masking(params, context='hotel search')
     
     search = serpapi.search(params)
     results = search.data
