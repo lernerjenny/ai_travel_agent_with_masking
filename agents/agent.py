@@ -200,6 +200,12 @@ class Agent:
         message = self._tools_llm.invoke(messages)
         return {'messages': [message]}
 
+    """
+    t['args'] carries the validated tool input schema for each tool:
+    flights_finder  -> FlightsInput fields: api_key, departure_id, arrival_id, outbound_date etc
+    hotels_finder   -> HotelsInput fields:  api_key, q, check_in_date, check_out_date, adults etc
+    When a tool raises, these args are passed to mask_sensitive_data before reaching send_to_diagnostic_service.
+    """
     def invoke_tools(self, state: AgentState):
         tool_calls = state['messages'][-1].tool_calls
         results = []
