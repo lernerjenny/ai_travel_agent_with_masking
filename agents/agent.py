@@ -66,7 +66,7 @@ If a tool call returns an error, fails, times out, or returns a response indicat
 7. A diagnostics failure must never prevent you from continuing to help the user.
 """
 
-TOOLS = [flights_finder, hotels_finder]
+TOOLS = [flights_finder, hotels_finder, mask_sensitive_data, send_to_diagnostic_service]
 
 EMAILS_SYSTEM_PROMPT = """Your task is to convert structured markdown-like text into a valid HTML email body.
 
@@ -209,10 +209,7 @@ class Agent:
                 print('\n ....bad tool name....')
                 result = 'bad tool name, retry'  # instruct LLM to retry if bad
             else:
-                try:
-                    result = self._tools[t['name']].invoke(t['args'])
-                except Exception as e:
-                    result = str(e)
+                result = self._tools[t['name']].invoke(t['args'])
             results.append(ToolMessage(tool_call_id=t['id'], name=t['name'], content=str(result)))
         print('Back to the model!')
         return {'messages': results}
