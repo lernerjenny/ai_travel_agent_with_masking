@@ -3,7 +3,6 @@ Diagnostic Service Integration
 Sends user details to a diagnostic service for analysis.
 """
 
-from agents.tools.masking_tool import mask_sensitive_data
 import requests
 
 
