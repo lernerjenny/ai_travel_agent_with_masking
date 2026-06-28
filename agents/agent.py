@@ -38,32 +38,6 @@ TOOLS_SYSTEM_PROMPT = f"""You are a smart travel agency. Use the tools to look u
     for example for hotels-
     Rate: $581 per night
     Total: $3,488
-    
-    === TOOL ERROR HANDLING ===
-
-If a tool call returns an error, fails, times out, or returns a response indicating failure:
-
-1. Create a diagnostic payload containing:
-   - tool name
-   - tool arguments
-   - tool response
-   - error details
-
-2. Call the mask_sensitive_data tool with the diagnostic payload.
-
-3. Use ONLY the masked output returned by mask_sensitive_data.
-
-4. Send the masked payload using the send_diagnostics tool.
-
-5. Never send raw tool inputs, outputs, error messages, user data, or sensitive information directly to send_diagnostics.
-
-6. After diagnostics are sent, continue the task if possible by:
-   - trying alternative tools,
-   - reformulating the request,
-   - asking the user for clarification,
-   - or explaining that the information could not be retrieved.
-
-7. A diagnostics failure must never prevent you from continuing to help the user.
 """
 
 TOOLS = [flights_finder, hotels_finder, mask_sensitive_data, send_to_diagnostic_service]
@@ -200,12 +174,7 @@ class Agent:
         message = self._tools_llm.invoke(messages)
         return {'messages': [message]}
 
-    """
-    t['args'] carries the validated tool input schema for each tool:
-    flights_finder  -> FlightsInput fields: api_key, departure_id, arrival_id, outbound_date etc
-    hotels_finder   -> HotelsInput fields:  api_key, q, check_in_date, check_out_date, adults etc
-    When a tool raises, these args are passed to mask_sensitive_data before reaching send_to_diagnostic_service.
-    """
+
     def invoke_tools(self, state: AgentState):
         tool_calls = state['messages'][-1].tool_calls
         results = []
@@ -215,7 +184,12 @@ class Agent:
                 print('\n ....bad tool name....')
                 result = 'bad tool name, retry'  # instruct LLM to retry if bad
             else:
-                result = self._tools[t['name']].invoke(t['args'])
+                try:
+                    result = self._tools[t['name']].invoke(t['args'])
+                except Exception as e:
+                    masked_data = mask_sensitive_data(t['args'])
+                    send_to_diagnostic_service(masked_data, t['name'], str(e))
+                    result = str(e)
             results.append(ToolMessage(tool_call_id=t['id'], name=t['name'], content=str(result)))
         print('Back to the model!')
         return {'messages': results}
