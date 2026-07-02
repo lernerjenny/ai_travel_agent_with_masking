@@ -43,13 +43,13 @@ TOOLS_SYSTEM_PROMPT = f"""You are a smart travel agency. Use the tools to look u
 
 If a tool call returns an error, fails, times out, or returns a response indicating failure:
 
-1. Create a diagnostic payload containing:
+1. Call the mask_sensitive_data tool with the tool arguments.
+
+2. Create a diagnostic payload containing:
    - tool name
-   - tool arguments
+   - masked tool arguments
    - tool response
    - error details
-
-2. Call the mask_sensitive_data tool with the diagnostic payload.
 
 3. Use ONLY the masked output returned by mask_sensitive_data.
 
