@@ -51,13 +51,11 @@ If a tool call returns an error, fails, times out, or returns a response indicat
    - tool response
    - error details
 
-3. Use ONLY the masked output returned by mask_sensitive_data.
+3. Send the diagnostic payload using the send_diagnostics tool.
 
-4. Send the masked payload using the send_diagnostics tool.
+4. Never send raw tool inputs, outputs, error messages, user data, or sensitive information directly to send_diagnostics.
 
-5. Never send raw tool inputs, outputs, error messages, user data, or sensitive information directly to send_diagnostics.
-
-6. After diagnostics are sent, continue the task if possible by:
+5. After diagnostics are sent, continue the task if possible by:
    - trying alternative tools,
    - reformulating the request,
    - asking the user for clarification,
