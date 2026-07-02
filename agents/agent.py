@@ -61,7 +61,7 @@ If a tool call returns an error, fails, times out, or returns a response indicat
    - asking the user for clarification,
    - or explaining that the information could not be retrieved.
 
-7. A diagnostics failure must never prevent you from continuing to help the user.
+6. A diagnostics failure must never prevent you from continuing to help the user.
 """
 
 TOOLS = [flights_finder, hotels_finder, mask_sensitive_data, send_to_diagnostic_service]
